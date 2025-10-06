@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Improvement Plan (PIP) Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Updated font link to include both Inter and Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* General Setup */
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        /* Input Styling Consistency */
+        .form-group input[type="text"],
+        .form-group input[type="date"],
+        .form-group select,
+        .form-group textarea,
+        .expectation-task,
+        .expectation-outcome,
+        .expectation-measure {
+            border-color: #d1d5db; /* gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            padding: 0.5rem 0.75rem;
+            transition: all 0.15s ease-in-out;
+        }
+
+        /* Focus State */
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus,
+        .expectation-task:focus,
+        .expectation-outcome:focus,
+        .expectation-measure:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            border-color: #4f46e5; /* indigo-500 */
+            box-shadow: 0 0 0 1px #4f46e5; /* ring-indigo-500 */
+        }
+
+        /* Tooltip Styling */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 10px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.875rem;
+            font-weight: 400;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+        /* Animation */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Output specific font and size requested by user */
+        #pipOutput {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11pt; 
+        }
+
+        /* Print Styles */
+        @media print {
+            body { background: none; margin: 0; padding: 0; }
+            .container { max-width: 100%; margin: 0; padding: 0; }
+            #pipForm, #outputSection button { display: none; }
+            #outputSection { 
+                display: block !important; 
+                margin-top: 0; 
+                box-shadow: none; 
+                padding: 0;
+            }
+            #pipOutput { 
+                background-color: transparent !important; 
+                border: none !important; 
+                font-size: 11pt; /* Apply 11pt to print view */
+                white-space: pre-wrap;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Performance Improvement Plan (PIP) Builder</h1>
+            <p class="mt-2 text-gray-600">A guided tool to help managers create clear and effective performance plans.</p>
+        </header>
+        
+        <!-- Coaching Philosophy Reminders -->
+        <div class="bg-yellow-50 p-6 rounded-xl shadow-inner border border-yellow-200 mb-6 space-y-3">
+            <h2 class="text-xl font-bold text-yellow-700 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                </svg>
+                Guidance: Building a Great PIP
+            </h2>
+            
+            <!-- Updated Guidance Content -->
+            <p class="text-sm text-gray-700 mb-4 border-b pb-2">
+                A PIP is a structured development tool. <strong>Use it only after non-formal coaching has failed.</strong> Approach it with empathy and focus on measurable growth.
+            </p>
+            <h3 class="font-semibold text-lg text-yellow-800 mb-2">Key Principles:</h3>
+            <ul class="text-sm text-gray-700 space-y-2 pl-4 list-disc">
+                <li><strong>Be Objective:</strong> Focus only on observable behaviors and concrete outcomes.</li>
+                <li><strong>Be Clear:</strong> State the consequences clearly and legally.</li>
+                <li><strong>Be Supportive:</strong> Detail the resources you will provide as a manager.</li>
+            </ul>
+            <!-- End Updated Guidance Content -->
+
+        </div>
+        
+        <main id="pipForm" class="space-y-6">
+            <!-- Card 1: Basic Information -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-indigo-700">1. Basic Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="employeeName" class="block text-sm font-medium text-gray-700">Employee Name</label>
+                        <input type="text" id="employeeName" class="mt-1 block w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeTitle" class="block text-sm font-medium text-gray-700">Employee Title & Level</label>
+                        <input type="text" id="employeeTitle" placeholder="e.g., Software Engineer, L4" class="mt-1 block w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="managerName" class="block text-sm font-medium text-gray-700">Manager Name</label>
+                        <input type="text" id="managerName" class="mt-1 block w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="secondLevelLeader" class="block text-sm font-medium text-gray-700">2nd Level Leader (Optional)</label>
+                        <input type="text" id="secondLevelLeader" class="mt-1 block w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
+                        <input type="text" id="department" class="mt-1 block w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="hrbp" class="block text-sm font-medium text-gray-700">HR Business Partner</label>
+                        <input type="text" id="hrbp" class="mt-1 block w-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Plan Duration -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-indigo-700">2. Plan Duration</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="form-group">
+                        <label for="pipDuration" class="block text-sm font-medium text-gray-700">Duration (in Days)</label>
+                        <select id="pipDuration" class="mt-1 block w-full">
+                            <option value="30">30 Days</option>
+                            <option value="60" selected>60 Days</option>
+                            <option value="90">90 Days</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date</label>
+                        <input type="date" id="startDate" class="mt-1 block w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate" class="block text-sm font-medium text-gray-700">End Date (Auto-calculated)</label>
+                        <input type="date" id="endDate" class="mt-1 block w-full bg-gray-100 cursor-not-allowed" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Performance Background -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-indigo-700">3. Performance Background</h2>
+                <div class="space-y-4">
+                    <div class="form-group">
+                        <label for="feedbackDates" class="block text-sm font-medium text-gray-700">Previous Feedback Dates</label>
+                        <input type="text" id="feedbackDates" placeholder="e.g., July 15, August 2, September 1" class="mt-1 block w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="clarityIssues" class="block text-sm font-medium text-gray-700">Areas Lacking Clarity/Consistency</label>
+                        <input type="text" id="clarityIssues" placeholder="e.g., project ownership, communication protocols" class="mt-1 block w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="backgroundSummary" class="flex items-center text-sm font-medium text-gray-700">
+                            History/Background Summary
+                            <span class="tooltip ml-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                                <span class="tooltiptext">Provide specific, fact-based examples of recent performance issues. Be objective and focus on behavior and outcomes, not personality. Example: "On [Date], the project report was submitted past the deadline..."</span>
+                            </span>
+                        </label>
+                        <textarea id="backgroundSummary" rows="4" class="mt-1 block w-full" placeholder="Example: On [Date], the project report was submitted past the deadline without prior communication, impacting the team's ability to..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Performance Expectations -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <h2 class="text-xl font-semibold text-indigo-700">4. Performance Plan Expectations (Goals)</h2>
+                    <button id="addExpectation" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-sm shadow-md transition duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        Add Expectation
+                    </button>
+                </div>
+                <div id="expectationsContainer" class="space-y-4">
+                    <!-- Dynamic expectations will be added here -->
+                </div>
+            </div>
+            
+            <!-- Card 5: Performance Strategies & Support -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-indigo-700">5. Performance Strategies & Support</h2>
+                <div class="space-y-4">
+                    <div class="form-group">
+                        <label for="trainingArea" class="block text-sm font-medium text-gray-700">Area Employee Will Be Trained On / Needed Skill Building</label>
+                        <textarea id="trainingArea" rows="3" class="mt-1 block w-full" placeholder="e.g., Advanced training on Salesforce reporting, Project Management best practices workshop."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="managerHelp" class="block text-sm font-medium text-gray-700">Manager's Commitment (Support Actions)</label>
+                        <textarea id="managerHelp" rows="3" class="mt-1 block w-full" placeholder="e.g., I will provide daily check-ins for the first two weeks, review all client-facing emails before they are sent, and help structure project plans."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeCommitment" class="block text-sm font-medium text-gray-700">Employee's Commitment (Action Plan)</label>
+                        <textarea id="employeeCommitment" rows="3" class="mt-1 block w-full" placeholder="e.g., Attending all mandatory training sessions.&#10;Seeking clarification immediately when tasks are unclear.&#10;Submitting a daily progress summary to the manager."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="resources" class="block text-sm font-medium text-gray-700">Resources Available</label>
+                        <textarea id="resources" rows="3" class="mt-1 block w-full" placeholder="e.g., Access to online learning platforms (LinkedIn Learning), mentorship from a senior team member, detailed documentation on our internal Wiki."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <div class="text-center pt-8">
+                <button id="generatePip" class="w-full md:w-auto bg-green-600 text-white px-10 py-4 rounded-full text-lg font-bold hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-green-500 shadow-xl transition duration-300 transform hover:scale-[1.02]">Generate PIP Document</button>
+            </div>
+        </main>
+
+        <!-- Output Section -->
+        <div id="outputSection" class="hidden mt-10 bg-white p-6 rounded-xl shadow-lg border border-gray-100 fade-in">
+            <h2 class="text-2xl font-bold text-center mb-6 text-gray-900">Generated Performance Improvement Plan</h2>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 mb-6">
+                <button id="copyPip" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 font-medium transition duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" /><path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" /></svg>
+                    Copy to Clipboard
+                </button>
+                <button id="printPip" class="bg-gray-700 text-white px-5 py-2 rounded-lg hover:bg-gray-800 font-medium transition duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v2a2 2 0 002 2h6a2 2 0 002-2V4h2a2 2 0 012 2v10a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2h2zm0 8a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd" /></svg>
+                    Print Document
+                </button>
+            </div>
+            
+            <div id="copy-message" class="text-center mb-2 text-green-600 font-semibold hidden">Copied to clipboard!</div>
+            
+            <!-- PIP Content -->
+            <div id="pipOutput" class="bg-gray-50 p-6 rounded-lg border border-gray-200 leading-relaxed overflow-x-auto" style="white-space: pre-wrap; min-height: 400px;">
+                <!-- Generated content will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- CONSTANTS ---
+            const pipForm = document.getElementById('pipForm');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            const durationSelect = document.getElementById('pipDuration');
+            const addExpectationBtn = document.getElementById('addExpectation');
+            const expectationsContainer = document.getElementById('expectationsContainer');
+            const generatePipBtn = document.getElementById('generatePip');
+            const outputSection = document.getElementById('outputSection');
+            const pipOutput = document.getElementById('pipOutput');
+            const copyPipBtn = document.getElementById('copyPip');
+            const printPipBtn = document.getElementById('printPip');
+            const copyMessage = document.getElementById('copy-message');
+
+            let expectationCount = 0;
+
+            // Set today's date as default start date
+            const today = new Date();
+            startDateInput.value = today.toISOString().split('T')[0];
+
+            // --- HELPER FUNCTIONS ---
+            function formatDate(dateString) {
+                if (!dateString) return '[Date Missing]';
+                try {
+                    return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                } catch (e) {
+                    return dateString; // Return raw if parsing fails
+                }
+            }
+
+            function calculateEndDate() {
+                if (!startDateInput.value) {
+                    endDateInput.value = '';
+                    return;
+                }
+                const startDate = new Date(startDateInput.value);
+                const duration = parseInt(durationSelect.value, 10);
+                
+                // Use UTC date methods to avoid timezone issues when adding days
+                // Start date is treated as midnight local time, add duration days worth of milliseconds
+                const endDateTime = startDate.getTime() + (duration * 24 * 60 * 60 * 1000);
+                const endDate = new Date(endDateTime);
+                
+                // Format date as YYYY-MM-DD for date input field
+                endDateInput.value = endDate.toISOString().split('T')[0];
+            }
+            
+            function renumberExpectations() {
+                const remaining = expectationsContainer.querySelectorAll('h3');
+                remaining.forEach((h3, index) => {
+                    h3.textContent = `Expectation #${index + 1}`;
+                });
+                expectationCount = remaining.length;
+            }
+
+            // Function to format multi-line text as a bulleted list
+            function formatAsBulletList(text) {
+                if (!text) return 'No specific commitments listed.';
+                // Split by newline, trim each line, filter out empty lines, and prepend bullet
+                return text.split('\n')
+                           .map(line => line.trim())
+                           .filter(line => line.length > 0)
+                           .map(line => `- ${line}`)
+                           .join('\n');
+            }
+
+
+            // --- DYNAMIC EXPECTATION BLOCKS ---
+            function createExpectationBlock() {
+                expectationCount++;
+                const div = document.createElement('div');
+                div.className = 'border border-indigo-200 rounded-lg p-4 space-y-3 bg-indigo-50 relative fade-in';
+                div.innerHTML = `
+                    <h3 class="font-semibold text-md text-indigo-800">Expectation #${expectationCount}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-700">Performance Indicator/Task</label>
+                            <input type="text" class="expectation-task mt-1 block w-full" placeholder="e.g., Timely submission of reports">
+                        </div>
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-700">Required Outcome (Specific & Measurable)</label>
+                            <input type="text" class="expectation-outcome mt-1 block w-full" placeholder="e.g., All weekly reports submitted by 9 AM Monday">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-700">How Success Will Be Measured (Metrics & Monitoring)</label>
+                        <textarea rows="2" class="expectation-measure mt-1 block w-full" placeholder="e.g., 100% on-time submission rate tracked in project dashboard."></textarea>
+                    </div>
+                    <button class="remove-expectation absolute top-2 right-2 p-1 text-red-500 hover:text-red-700 rounded-full transition duration-150" title="Remove expectation">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </button>
+                `;
+                expectationsContainer.appendChild(div);
+            }
+            
+            // --- PIP TEXT GENERATION ---
+            function generatePipText() {
+                const data = {
+                    date: formatDate(new Date().toISOString().split('T')[0]),
+                    employee: document.getElementById('employeeName').value.trim() || '[EMPLOYEE NAME]',
+                    titleLevel: document.getElementById('employeeTitle').value.trim() || '[Title, Level]',
+                    manager: document.getElementById('managerName').value.trim() || '[MANAGER NAME]',
+                    secondLevelLeader: document.getElementById('secondLevelLeader').value.trim() || '[2nd Level Leader Name]',
+                    department: document.getElementById('department').value.trim() || '[Department]',
+                    hrbp: document.getElementById('hrbp').value.trim() || '[HR Business Partner]',
+                    duration: document.getElementById('pipDuration').value,
+                    startDate: formatDate(startDateInput.value),
+                    endDate: formatDate(endDateInput.value),
+                    feedbackDates: document.getElementById('feedbackDates').value.trim() || '[Date] and [Date]',
+                    clarityIssues: document.getElementById('clarityIssues').value.trim() || '[x, y, z]',
+                    background: document.getElementById('backgroundSummary').value.trim() || '[Detailed, fact-based background summary...]',
+                    training: document.getElementById('trainingArea').value.trim() || '[Training plan details...]',
+                    managerHelp: document.getElementById('managerHelp').value.trim() || '[Manager support details...]',
+                    employeeCommitment: document.getElementById('employeeCommitment').value.trim() || '', // Use raw text here
+                    resources: document.getElementById('resources').value.trim() || '[Available resources details...]'
+                };
+                
+                // Calculate Mid-Point Review Date
+                const durationDays = parseInt(data.duration, 10);
+                const startDateObj = new Date(startDateInput.value);
+                // Calculate mid-point date (half the duration)
+                const midPointDateTime = startDateObj.getTime() + (Math.floor(durationDays / 2) * 24 * 60 * 60 * 1000);
+                const midPointDate = new Date(midPointDateTime).toISOString().split('T')[0];
+                const midPointDateFormatted = formatDate(midPointDate);
+
+                let expectationsText = '';
+                const expectationBlocks = expectationsContainer.querySelectorAll('.border');
+                
+                if (expectationBlocks.length > 0) {
+                    expectationBlocks.forEach((block, index) => {
+                        const task = block.querySelector('.expectation-task').value.trim() || `[Task #${index + 1}]`;
+                        const outcome = block.querySelector('.expectation-outcome').value.trim() || `[Outcome #${index + 1}]`;
+                        const measure = block.querySelector('.expectation-measure').value.trim() || `[Measurement #${index + 1}]`;
+                        
+                        expectationsText += `
+    ${index + 1}. Performance Area: ${task}
+      Required Outcome: ${outcome}
+      Success Measured By: ${measure}
+      --------------------------------------------------
+                        `;
+                    });
+                } else {
+                    expectationsText = 'No specific expectations defined. Please add measurable goals using the "Add Expectation" button.';
+                }
+
+                return `
+PERFORMANCE IMPROVEMENT PLAN
+CONFIDENTIAL
+
+DATE OF CREATION: ${data.date}
+
+EMPLOYEE INFORMATION
+----------------------------------------------------
+Employee Name: ${data.employee}
+Title & Level: ${data.titleLevel}
+Department: ${data.department}
+
+MANAGEMENT & SUPPORT TEAM
+----------------------------------------------------
+Immediate Manager: ${data.manager}
+2nd Level Leader: ${data.secondLevelLeader}
+HR Business Partner: ${data.hrbp}
+
+PLAN SUMMARY
+----------------------------------------------------
+The purpose of this Performance Improvement Plan (PIP) is to formally address ongoing performance concerns and create a documented path for success. The goal is to assist you in improving your performance in identified areas over a period of ${data.duration} days.
+
+PLAN DURATION: ${data.duration} Days
+Effective Start Date: ${data.startDate}
+Review End Date: ${data.endDate}
+
+PERFORMANCE BACKGROUND
+----------------------------------------------------
+Previous discussions regarding performance concerns occurred on: ${data.feedbackDates}.
+Specifically, there has been a lack of clarity/consistency around: ${data.clarityIssues}.
+
+History/Background Summary (Specific Examples):
+${data.background}
+
+PERFORMANCE PLAN EXPECTATIONS (GOALS)
+----------------------------------------------------
+The following specific tasks, milestones, and behaviors must be demonstrated consistently:
+
+${expectationsText.trim()}
+
+PERFORMANCE STRATEGIES AND SUPPORT
+----------------------------------------------------
+To assist in achieving the required performance, the following support will be provided:
+
+Area Employee Will Be Trained On / Needed Skill Building:
+${data.training}
+
+Manager's Commitment (Support Actions):
+${data.managerHelp}
+
+Employee's Commitment (Action Plan):
+${formatAsBulletList(data.employeeCommitment)}
+
+Resources Available to You:
+${data.resources}
+
+REVIEW AND CHECK-IN SCHEDULE
+----------------------------------------------------
+Formal Weekly Check-ins with Manager: Weekly on [Day of Week, to be determined at the meeting].
+Mid-Point Review: ${midPointDateFormatted} (Approx. ${Math.floor(durationDays / 2)} days in)
+Final Review: ${data.endDate} (End of Plan)
+
+RESPONSIBILITIES AND ACKNOWLEDGEMENT
+----------------------------------------------------
+EMPLOYEE RESPONSIBILITIES:
+- Meet and sustain the performance expectations outlined in this document.
+- Report immediately to your manager any circumstances impacting your ability to meet expectations.
+
+MANAGER RESPONSIBILITIES:
+- Conduct regular review meetings (at least weekly) for the duration of the plan.
+- Provide honest, constructive, and timely feedback and reasonable support.
+- Identify and provide any additional and reasonable resources, training, and assistance required.
+
+ACKNOWLEDGEMENT OF CONSEQUENCES:
+Please note that the expectations must be achieved during the plan period AND sustained after the successful completion of the plan. Failure to correct any unsatisfactory performance now or in the future may result in further disciplinary action, up to and including termination of your employment.
+
+____________________________________________
+${data.manager}, Immediate Manager
+Date:
+
+____________________________________________
+${data.secondLevelLeader}, 2nd Level Leader (Witness)
+Date:
+
+ACKNOWLEDGEMENT BY EMPLOYEE
+I acknowledge that I have received and reviewed the terms and conditions of this Performance Improvement Plan, that they have been explained to me, and that I understand the expectations and consequences outlined herein.
+
+____________________________________________
+${data.employee}, ${data.titleLevel}
+Date:
+                `;
+            }
+
+            // --- EVENT LISTENERS ---
+            startDateInput.addEventListener('change', calculateEndDate);
+            durationSelect.addEventListener('change', calculateEndDate);
+
+            addExpectationBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                createExpectationBlock();
+            });
+
+            expectationsContainer.addEventListener('click', function(e) {
+                const removeBtn = e.target.closest('.remove-expectation');
+                if (removeBtn) {
+                    e.preventDefault();
+                    removeBtn.closest('.border').remove();
+                    renumberExpectations();
+                }
+            });
+
+            generatePipBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pipText = generatePipText();
+                pipOutput.textContent = pipText;
+                outputSection.classList.remove('hidden');
+                window.scrollTo({ top: outputSection.offsetTop - 20, behavior: 'smooth' });
+            });
+
+            copyPipBtn.addEventListener('click', () => {
+                const textToCopy = pipOutput.textContent;
+                // Fallback for clipboard API in restricted contexts
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = "fixed"; 
+                textArea.style.left = "-9999px"; // Hide it
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    copyMessage.classList.remove('hidden');
+                    setTimeout(() => copyMessage.classList.add('hidden'), 2500);
+                } catch (err) {
+                    console.error('Fallback: Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            });
+
+            printPipBtn.addEventListener('click', () => {
+                window.print();
+            });
+
+            // --- INITIALIZATION ---
+            calculateEndDate();
+            createExpectationBlock(); // Start with one expectation block by default
+        });
+    </script>
+</body>
+</html>
+
+
